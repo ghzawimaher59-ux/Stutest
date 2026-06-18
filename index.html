@@ -1080,43 +1080,8 @@ let currentUser = null; // { universityId, name, year }
 let authFlow = { mode: null, universityId: null, email: null, otpPurpose: null };
 let activeCommentsUID = null;
 let activeCommentsName = ''
- // داخل دالة تسجيل الدخول الخاصة بك (بعد نجاح الاتصال بالـ API)
-if (response.status === 'success') {
-    // حفظ الـ Token وبيانات المستخدم في المتصفح
-    localStorage.setItem('sessionToken', response.token);
-    
-    // توجيه المستخدم إلى لوحة المشاريع
-    window.location.href = 'projects.html'; 
-} ;
-window.onload = function() {
-    const savedToken = localStorage.getItem('sessionToken');
-    
-    if (savedToken) {
-        // المستخدم لديه Token، لنتحقق من صحته في الخلفية
-        fetch('https://script.google.com/macros/s/AKfycbzIPdM8wqr7aSfiZEt5OMp_I3nLFHpEpPE1OBNIgO8KEWEfGfzoamjxufkJCpqQROWF/exec?action=verifySession&token=' + savedToken)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // الجلسة صالحة! أدخل المستخدم مباشرة دون طلب كلمة السر
-                    console.log("مرحباً بعودتك " + data.name);
-                    // قم بإخفاء صفحة تسجيل الدخول وإظهار المشاريع
-                } else {
-                    // الرمز منتهي الصلاحية أو محذوف، قم بتنظيف المتصفح
-                    localStorage.removeItem('sessionToken');
-                    // إظهار واجهة تسجيل الدخول المعتادة
-                }
-            })
-            .catch(err => {
-                console.error('خطأ في التحقق من الجلسة', err);
-            });
-    } else {
-        // لا يوجد رمز، إظهار واجهة تسجيل الدخول
-    }
 };
-  function logout() {
-    localStorage.removeItem('sessionToken');
-    window.location.reload(); // إعادة تحميل الصفحة لإظهار شاشة تسجيل الدخول
-}
+
 /* ── BOOT ── */
 document.addEventListener('DOMContentLoaded', () => {
   buildMemberSlots();
