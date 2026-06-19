@@ -1059,6 +1059,7 @@ const CFG = {
     { name: 'ماهر غزاوي',    phone: '963950087443' },
     { name: 'شادي عنطوز',    phone: '963980430163' },
   ],
+  FEED_POLL_MS: 4500,
 };
 
 /* ─── STATE ─── */
@@ -1071,6 +1072,7 @@ let editTargetUID   = null;
 let likeCounts    = {};   // { projectUid: count }
 let myLikes       = {};   // { projectUid: true }
 let commentCounts = {};   // { projectUid: count }
+let feedPollTimer = null;
 let likeBusy      = {};   // قفل مؤقت لمنع نقرات متكررة سريعة على نفس المشروع
 
 // المستخدم الحالي (يُحفظ بالذاكرة فقط لمدة الجلسة الحالية)
@@ -1116,7 +1118,7 @@ function restoreSession() {
 ══════════════════════════════════════════ */
 async function loadProjects() {
   screen('loading');
-  if (CFG.SPREADSHEET_ID === '1w2e7mTFFVhW0mEo0NEcpfNzfijmU10dkOdZQ52F3CT8') {
+  if (CFG.SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') {
     document.getElementById('cfgBanner').classList.add('on');
     screen('error');
     document.getElementById('errMsg').textContent = 'لم يتم تهيئة المعرّف.';
@@ -1781,7 +1783,8 @@ function normalizeName(n) { return String(n||'').trim().toLowerCase(); }
 
 function logoutUser() {
   currentUser = null;
-  refreshMyLikesListener(); // إعادة ضبط listener بدون مستخدم → يصفّر myLikes
+  stopFeedPolling();
+  startFeedPolling();
   renderSidePanel();
   applyFilters();
   toast('تم تسجيل الخروج','ok');
@@ -1876,7 +1879,6 @@ async function submitLogin() {
   if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
 
   currentUser = { universityId: res.universityId || universityId, name: res.name || '', year: res.year || '' };
-  refreshMyLikesListener(); // ابدأ الاستماع للايكات هذا المستخدم تحديداً
   closeOverlayDirect('authOverlay');
   renderSidePanel();
   applyFilters();
@@ -2005,7 +2007,6 @@ async function submitOtpStep() {
     if (res.status !== 'success') return toast(res.message || 'رمز غير صحيح','err');
 
     currentUser = { universityId: authFlow.universityId, name: res.name || authFlow.studentName || '', year: res.year || '' };
-    refreshMyLikesListener(); // ابدأ الاستماع للايكات هذا المستخدم تحديداً
     closeOverlayDirect('authOverlay');
     renderSidePanel();
     applyFilters();
@@ -2201,23 +2202,21 @@ async function handleLikeClick(event, uid) {
   if (likeBusy[uid]) return;
   likeBusy[uid] = true;
 
-  // تحديث تفاؤلي فوري في الواجهة
-  const wasLiked  = !!myLikes[uid];
+  // تحديث تفاؤلي فوري
+  const wasLiked = !!myLikes[uid];
   const prevCount = likeCounts[uid] || 0;
-  myLikes[uid]    = !wasLiked;
+  myLikes[uid] = !wasLiked;
   likeCounts[uid] = wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
   updateLikeDOM(uid);
 
   const res = await callApi({ action:'toggleLike', projectUid: uid, universityId: currentUser.universityId });
 
   if (res.status === 'success') {
-    myLikes[uid]    = res.liked;
+    myLikes[uid] = res.liked;
     likeCounts[uid] = res.count;
-    // ✅ كتابة النتيجة الحقيقية في Firebase → يصل فورياً لكل المتصفحات المفتوحة
-    fbWriteLike(uid, res.liked, res.count);
   } else {
     // تراجع عن التحديث التفاؤلي عند فشل الطلب
-    myLikes[uid]    = wasLiked;
+    myLikes[uid] = wasLiked;
     likeCounts[uid] = prevCount;
     toast(res.message || 'تعذّر تنفيذ العملية','err');
   }
@@ -2314,9 +2313,6 @@ async function sendComment() {
     commentCounts[activeCommentsUID] = (commentCounts[activeCommentsUID] || 0) + 1;
     const countEl = document.getElementById('commentCount-' + activeCommentsUID);
     if (countEl) countEl.textContent = commentCounts[activeCommentsUID];
-
-    // ✅ كتابة التعليق الجديد في Firebase → يصل فورياً لعدادات الجميع
-    fbWriteComment(activeCommentsUID, res.comment);
   } else {
     toast(res.message || 'تعذّر إرسال التعليق','err');
   }
@@ -2338,118 +2334,38 @@ function shareProject(event, uid) {
 }
 
 /* ══════════════════════════════════════════
-   FIREBASE REALTIME DATABASE — تحديث فوري حقيقي
-   بدلاً من Polling، نستمع مباشرة لأي تغيير في Firebase
-   ويصل التحديث لجميع المتصفحات المفتوحة في أقل من ثانية.
-   البيانات الدائمة لا تزال في Google Sheets (المصدر الرئيسي).
-   Firebase هنا طبقة لحظية رفيعة فوقها فقط.
+   FEED POLLING (محاكاة آنية بدون WebSocket)
+   Apps Script/GitHub Pages لا يدعمان WebSocket، لذا الحل
+   هو تحديث دوري خفيف كل CFG.FEED_POLL_MS يجلب اللايكات
+   وعدد التعليقات لكل المشاريع دفعة واحدة (getFeed) ويُحدّث
+   فقط العدادات وحالة القلوب في الواجهة دون إعادة بناء الشبكة.
 ══════════════════════════════════════════ */
-
-/* ─── إعداد Firebase ─── */
-const FB_CONFIG = {
-  apiKey:            'AIzaSyC7uG-rDRZfnP5N4jvuK01UTZHDkwf6LII',
-  authDomain:        'students-project-f64a1.firebaseapp.com',
-  databaseURL:       'https://students-project-f64a1-default-rtdb.europe-west1.firebasedatabase.app',
-  projectId:         'students-project-f64a1',
-  storageBucket:     'students-project-f64a1.firebasestorage.app',
-  messagingSenderId: '937871067692',
-  appId:             '1:937871067692:web:2270ff050c9fae71135f89',
-};
-
-let fbApp = null;
-let fbDb  = null;
-let fbListeners = []; // قائمة بـ refs النشطة لإلغائها عند تسجيل الخروج
-
-function initFirebase() {
-  if (fbApp) return; // تهيئة مرة واحدة فقط
-  fbApp = firebase.initializeApp(FB_CONFIG);
-  fbDb  = firebase.database();
-}
-
-/* ─── بدء الاستماع الفوري (يُستدعى بعد تحميل المشاريع) ─── */
 function startFeedPolling() {
-  initFirebase();
-  stopFeedPolling(); // إلغاء أي listeners سابقة أولاً
-
-  // الاستماع لجميع عدادات اللايكات دفعة واحدة
-  const likeRef = fbDb.ref('likeCounts');
-  likeRef.on('value', snap => {
-    likeCounts = snap.val() || {};
-    allProjects.forEach(p => updateLikeDOM(p.uid));
-  });
-  fbListeners.push(likeRef);
-
-  // الاستماع لحالة لايك المستخدم الحالي تحديداً
-  refreshMyLikesListener();
-
-  // الاستماع لجميع عدادات التعليقات دفعة واحدة
-  const commentRef = fbDb.ref('commentCounts');
-  commentRef.on('value', snap => {
-    commentCounts = snap.val() || {};
-    document.querySelectorAll('[id^="commentCount-"]').forEach(el => {
-      const uid = el.id.replace('commentCount-', '');
-      el.textContent = commentCounts[uid] > 0 ? commentCounts[uid] : '';
-    });
-  });
-  fbListeners.push(commentRef);
+  stopFeedPolling();
+  feedPollTimer = setInterval(pollFeed, CFG.FEED_POLL_MS);
 }
-
-/* ─── الاستماع لحالة لايكات المستخدم الحالي (يتغيّر عند تسجيل الدخول/الخروج) ─── */
-let myLikesRef = null;
-function refreshMyLikesListener() {
-  if (myLikesRef) { myLikesRef.off(); myLikesRef = null; }
-  if (!currentUser) { myLikes = {}; allProjects.forEach(p => updateLikeDOM(p.uid)); return; }
-
-  myLikesRef = fbDb.ref('myLikes');
-  myLikesRef.on('value', snap => {
-    const allLikes = snap.val() || {};
-    // استخرج فقط المشاريع التي أعجب بها هذا المستخدم تحديداً
-    myLikes = {};
-    Object.keys(allLikes).forEach(projectUid => {
-      if (allLikes[projectUid] && allLikes[projectUid][currentUser.universityId]) {
-        myLikes[projectUid] = true;
-      }
-    });
-    allProjects.forEach(p => updateLikeDOM(p.uid));
-  });
-}
-
-/* ─── إيقاف كل الاستماعات (عند تسجيل الخروج مثلاً) ─── */
 function stopFeedPolling() {
-  fbListeners.forEach(ref => ref.off());
-  fbListeners = [];
-  if (myLikesRef) { myLikesRef.off(); myLikesRef = null; }
+  if (feedPollTimer) clearInterval(feedPollTimer);
+  feedPollTimer = null;
 }
 
-/* ─── كتابة تفاعل لايك في Firebase (تُستدعى من handleLikeClick) ─── */
-function fbWriteLike(projectUid, liked, count) {
-  if (!fbDb) return;
-  // تحديث العداد العام
-  fbDb.ref(`likeCounts/${projectUid}`).set(count);
-  // تحديث حالة هذا المستخدم تحديداً
-  const myLikePath = `myLikes/${projectUid}/${currentUser.universityId}`;
-  if (liked) fbDb.ref(myLikePath).set(true);
-  else       fbDb.ref(myLikePath).remove();
-}
+async function pollFeed() {
+  if (document.hidden) return; // لا حاجة للتحديث إن كانت الصفحة غير ظاهرة (توفير طلبات)
+  const res = await callApi({ action:'getFeed', universityId: currentUser ? currentUser.universityId : '' });
+  if (res.status !== 'success') return;
 
-/* ─── كتابة تعليق جديد في Firebase (تُستدعى من sendComment) ─── */
-function fbWriteComment(projectUid, comment) {
-  if (!fbDb) return;
-  // تحديث عداد التعليقات
-  const newCount = (commentCounts[projectUid] || 0) + 1;
-  fbDb.ref(`commentCounts/${projectUid}`).set(newCount);
-  // إضافة التعليق الجديد للـ feed اللحظي (آخر 20 تعليق فقط لكل مشروع)
-  const feedRef = fbDb.ref(`commentsFeed/${projectUid}/${comment.id}`);
-  feedRef.set({
-    authorName: comment.authorName,
-    text:       comment.text,
-    timestamp:  comment.timestamp,
+  likeCounts    = res.likeCounts    || {};
+  myLikes       = res.myLikes       || {};
+  commentCounts = res.commentCounts || {};
+
+  allProjects.forEach(p => updateLikeDOM(p.uid));
+  document.querySelectorAll('[id^="commentCount-"]').forEach(el => {
+    const uid = el.id.replace('commentCount-', '');
+    const count = commentCounts[uid] || 0;
+    el.textContent = count > 0 ? count : '';
   });
 }
 
 </script>
-<!-- Firebase SDK (compat — يعمل مع الكود الكلاسيكي بدون modules) -->
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 </body>
 </html>
