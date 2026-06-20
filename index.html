@@ -632,7 +632,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-eyebrow">منصة مفتوحة للجميع</div>
-  <h1>اعرض مشروعك<br/><em>أمام زملائك</em></h1>
+  <h1>سجل مشروعك<br/><em>مع فريقك</em></h1>
   <p>أضف مشروعك الأكاديمي، شكّل فريقك، وأرفق فيديو الإنجاز عند الانتهاء.</p>
   <div class="counter-row">
     <div class="counter-item"><div class="counter-val" id="cntProjects">—</div><div class="counter-lbl">مشروع مسجّل</div></div>
@@ -1269,9 +1269,9 @@ const db = firebase.database();
 
 /* ─── CONFIG ─── */
 const CFG = {
-  SPREADSHEET_ID:  'YOUR_SPREADSHEET_ID_HERE',
+  SPREADSHEET_ID:  '1w2e7mTFFVhW0mEo0NEcpfNzfijmU10dkOdZQ52F3CT8',
   SHEET_NAME:      'Projects',
-  APPS_SCRIPT_URL: 'YOUR_APPS_SCRIPT_URL_HERE',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw-EaMInbe_hmWboaK1HUoO7QPNajGKSWFy_Q6XMnkqgdUqaWdpStXf7sCnQ4eBw4g7/exec',
   MAX_MEMBERS: 5,
   MIN_MEMBERS: 1,
   SUPPORT_WHATSAPP: '963950087443',
@@ -2059,11 +2059,11 @@ function supportAndSupervisorsRowsHTML() {
   return `
     <div class="sp-links-group">
       <button class="sp-link-row" onclick="window.open('https://wa.me/${CFG.SUPPORT_WHATSAPP}','_blank')">
-        <span class="sp-link-ico">🛟</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
+        <span class="sp-link-ico">🛠️</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
       </button>
       <div class="sp-dropdown" id="supervisorsDropdown">
         <button class="sp-link-row" onclick="toggleSupervisorsDropdown()">
-          <span class="sp-link-ico">🧑‍🏫</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
+          <span class="sp-link-ico">🔐</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
         </button>
         <div class="sp-dropdown-list">
           ${CFG.SUPERVISORS.map(s => `
