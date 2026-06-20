@@ -596,7 +596,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-eyebrow">منصة مفتوحة للجميع</div>
-  <h1>اعرض مشروعك<br/><em>أمام زملائك</em></h1>
+  <h1>سجل مشروعك<br/><em>مع فريقك</em></h1>
   <p>أضف مشروعك الأكاديمي، شكّل فريقك، وأرفق فيديو الإنجاز عند الانتهاء.</p>
   <div class="counter-row">
     <div class="counter-item"><div class="counter-val" id="cntProjects">—</div><div class="counter-lbl">مشروع مسجّل</div></div>
@@ -1843,11 +1843,11 @@ function supportAndSupervisorsRowsHTML() {
   return `
     <div class="sp-links-group">
       <button class="sp-link-row" onclick="window.open('https://wa.me/${CFG.SUPPORT_WHATSAPP}','_blank')">
-        <span class="sp-link-ico">🛟</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
+        <span class="sp-link-ico">🛠️</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
       </button>
       <div class="sp-dropdown" id="supervisorsDropdown">
         <button class="sp-link-row" onclick="toggleSupervisorsDropdown()">
-          <span class="sp-link-ico">🧑‍🏫</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
+          <span class="sp-link-ico">🔐</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
         </button>
         <div class="sp-dropdown-list">
           ${CFG.SUPERVISORS.map(s => `
