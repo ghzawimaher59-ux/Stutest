@@ -596,7 +596,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-eyebrow">منصة مفتوحة للجميع</div>
-  <h1>اعرض مشروعك<br/><em>أمام زملائك</em></h1>
+  <h1>سجل مشروعك<br/><em>مع فريقك</em></h1>
   <p>أضف مشروعك الأكاديمي، شكّل فريقك، وأرفق فيديو الإنجاز عند الانتهاء.</p>
   <div class="counter-row">
     <div class="counter-item"><div class="counter-val" id="cntProjects">—</div><div class="counter-lbl">مشروع مسجّل</div></div>
@@ -823,9 +823,9 @@
   <div class="success-card">
     <div class="s-icon">🎉</div>
     <h3>تم نشر المشروع!</h3>
-    <p>ظهر مشروعك على اللوحة. احتفظ بالرمز لرفع الفيديو لاحقاً.</p>
+    <p>ظهر مشروعك على اللوحة. احتفظ بالرمز لرفع الفيديو لاحقاً أو لإجراء تعديلات.</p>
     <div class="s-id" id="sId"></div>
-    <div class="s-warning">⚠️ احتفظ بهذا الرمز — ستحتاجه لرفع فيديو مشروعك</div>
+    <div class="s-warning">⚠️ احتفظ بهذا الرمز — ستحتاجه لرفع فيديو مشروعك أو تعديله</div>
     <button class="btn-done" onclick="closeOverlayDirect('successOverlay')">رائع، فهمت!</button>
   </div>
 </div>
@@ -879,7 +879,7 @@
           <label class="field-label">الرقم الجامعي</label>
           <input type="text" class="field-input" id="signupUid" placeholder="مثال: 202312345" autocomplete="off" inputmode="numeric" />
         </div>
-        <div class="info-box">سيتم التحقق من رقمك الجامعي من كشف الطلاب أولاً.</div>
+        <div class="info-box">سيتم التحقق من رقمك الجامعي أولاً.</div>
         <div class="auth-switch-line">لديك حساب مسبقاً؟ <a onclick="goToLogin()">تسجيل الدخول</a></div>
       </div>
 
@@ -1793,11 +1793,11 @@ function supportAndSupervisorsRowsHTML() {
   return `
     <div class="sp-links-group">
       <button class="sp-link-row" onclick="window.open('https://wa.me/${CFG.SUPPORT_WHATSAPP}','_blank')">
-        <span class="sp-link-ico">🛟</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
+        <span class="sp-link-ico">🛠️</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
       </button>
       <div class="sp-dropdown" id="supervisorsDropdown">
         <button class="sp-link-row" onclick="toggleSupervisorsDropdown()">
-          <span class="sp-link-ico">🧑‍🏫</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
+          <span class="sp-link-ico">🔑</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
         </button>
         <div class="sp-dropdown-list">
           ${CFG.SUPERVISORS.map(s => `
