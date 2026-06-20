@@ -1912,9 +1912,15 @@ async function submitLogin() {
   const res = await callApi({ action:'login', universityId, password });
   setBtnLoading(false);
 
-  if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
+if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
 
-  currentUser = { universityId: res.universityId || universityId, name: res.name || '', year: res.year || '' };
+  currentUser = {
+    universityId: res.universityId || universityId,
+    name:         res.name        || '',
+    fatherName:   res.fatherName  || '',
+    year:         res.year        || '',
+    project:      res.project     || null,   // ← مشروع الطالب من الخادم مباشرةً
+  };
   saveSession();
   recomputeLikesFromTree();
   closeOverlayDirect('authOverlay');
