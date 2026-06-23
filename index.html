@@ -416,12 +416,12 @@
       /* إخفاء زر الإضافة من الهيدر على الهاتف */
       .header-actions .fab { display: none; }
 
-      /* شريط الزر المثبّت على الهاتف */
+      /* شريط الزر المثبّت على الهاتف — فوق شريط الفلاتر */
       .mobile-fab-bar {
         display: block;
         position: sticky;
         top: 68px; /* ارتفاع الهيدر */
-        z-index: 19;
+        z-index: 21; /* أعلى من controls-bar (z-index:20) */
         padding: 10px 16px;
         background: rgba(10,11,16,0.92);
         backdrop-filter: blur(16px);
@@ -434,6 +434,10 @@
         border-radius: var(--radius-sm);
         padding: 12px 22px;
         font-size: 15px;
+      }
+      /* شريط الفلاتر يبدأ تحت زر الإضافة على الهاتف */
+      .controls-bar {
+        top: 120px; /* 68px هيدر + 52px شريط الزر */
       }
     }
     ::-webkit-scrollbar { width: 5px; }
