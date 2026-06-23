@@ -428,6 +428,84 @@
     .account-btn img { width: 100%; height: 100%; object-fit: cover; }
 
     /* ══════════════════════════════════════════
+       NOTIFICATIONS — جرس الإشعارات + قائمته المنسدلة
+       (تُغذَّى آنياً من Firebase Realtime Database — notifications/{uid})
+    ══════════════════════════════════════════ */
+    .notif-btn {
+      position: relative;
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--surface2); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; color: var(--text-sub);
+      transition: border-color .2s;
+    }
+    .notif-btn:hover { border-color: rgba(45,212,191,0.4); }
+    .notif-badge {
+      position: absolute; top: -3px; left: -3px;
+      min-width: 17px; height: 17px; padding: 0 4px; border-radius: 100px;
+      background: var(--red); color: #fff; font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--bg); line-height: 1;
+    }
+    .notif-panel {
+      position: fixed; top: 64px; left: 16px; z-index: 60;
+      width: 360px; max-width: calc(100vw - 32px); max-height: 70vh;
+      background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+      box-shadow: 0 20px 56px rgba(0,0,0,0.55);
+      opacity: 0; transform: translateY(-8px); pointer-events: none;
+      transition: opacity .18s, transform .18s;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+    .notif-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .notif-panel-head h3 { font-size: 14px; font-weight: 800; }
+    .notif-mark-all {
+      background: none; border: none; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 11.5px; font-weight: 700;
+      color: var(--teal); padding: 4px 2px;
+    }
+    .notif-mark-all:hover { text-decoration: underline; }
+    .notif-list { overflow-y: auto; display: flex; flex-direction: column; }
+    .notif-empty { text-align: center; padding: 34px 16px; color: var(--text-muted); font-size: 13px; }
+    .notif-item {
+      display: flex; gap: 10px; padding: 12px 16px; cursor: pointer;
+      border-bottom: 1px solid var(--border); transition: background .15s;
+      position: relative;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--surface3); }
+    .notif-item.unread { background: rgba(45,212,191,0.05); }
+    .notif-item.unread::before {
+      content: ''; position: absolute; top: 16px; right: 6px;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--teal);
+    }
+    .notif-ico {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: var(--surface3); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-text { font-size: 12.5px; color: var(--text-sub); line-height: 1.55; }
+    .notif-text b { color: var(--text); font-weight: 700; }
+    .notif-proj { color: var(--teal); font-weight: 700; }
+    .notif-snippet {
+      font-size: 12px; color: var(--text-muted); margin-top: 3px;
+      background: var(--surface3); border-radius: var(--radius-xs); padding: 5px 9px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .notif-time { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
+
+    /* وميض بسيط لتمييز بطاقة المشروع عند الوصول إليها من إشعار */
+    @keyframes notifFlash {
+      0%, 100% { box-shadow: none; border-color: var(--border); }
+      30% { box-shadow: 0 0 0 3px rgba(45,212,191,0.35); border-color: rgba(45,212,191,0.5); }
+    }
+    .project-card.notif-flash { animation: notifFlash 1.6s ease; }
+
+    /* ══════════════════════════════════════════
        SIDE PANEL + BACKDROP BLUR
     ══════════════════════════════════════════ */
     .page-blur-overlay {
@@ -623,6 +701,19 @@
   </div>
   <div class="header-actions">
     <button class="fab" onclick="openAddModal()">إضافة مشروع</button>
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel(event)" title="الإشعارات">
+      🔔
+      <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+    </button>
+    <div class="notif-panel" id="notifPanel" onclick="event.stopPropagation()">
+      <div class="notif-panel-head">
+        <h3>الإشعارات</h3>
+        <button class="notif-mark-all" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button>
+      </div>
+      <div class="notif-list" id="notifList">
+        <div class="notif-empty">سجّل دخولك لرؤية الإشعارات</div>
+      </div>
+    </div>
     <button class="account-btn" id="accountBtn" onclick="openSidePanel()" title="حسابي">
       <span id="accountBtnIcon">👤</span>
     </button>
@@ -632,7 +723,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-eyebrow">منصة مفتوحة للجميع</div>
-  <h1>سجل مشروعك<br/><em>مع فريقك</em></h1>
+  <h1>اعرض مشروعك<br/><em>أمام زملائك</em></h1>
   <p>أضف مشروعك الأكاديمي، شكّل فريقك، وأرفق فيديو الإنجاز عند الانتهاء.</p>
   <div class="counter-row">
     <div class="counter-item"><div class="counter-val" id="cntProjects">—</div><div class="counter-lbl">مشروع مسجّل</div></div>
@@ -1269,9 +1360,9 @@ const db = firebase.database();
 
 /* ─── CONFIG ─── */
 const CFG = {
-  SPREADSHEET_ID:  '1w2e7mTFFVhW0mEo0NEcpfNzfijmU10dkOdZQ52F3CT8',
+  SPREADSHEET_ID:  '1Zjlvi2w96EdKhccWSMd76NsudLpK6hAFu98VcscAnL2YWpytwpW98MeV',
   SHEET_NAME:      'Projects',
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw-EaMInbe_hmWboaK1HUoO7QPNajGKSWFy_Q6XMnkqgdUqaWdpStXf7sCnQ4eBw4g7/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyfq2gaQTkhCH3maYf5kR1FWqUt3h07xjcwhxAQ4owt39jpJULqadnp5tzj5IR7cyGypg/exec',
   MAX_MEMBERS: 5,
   MIN_MEMBERS: 1,
   SUPPORT_WHATSAPP: '963950087443',
@@ -1297,6 +1388,12 @@ let likesTree     = {};   // آخر نسخة خام من شجرة اللايكا
 let commentsTree  = {};   // آخر نسخة خام من شجرة التعليقات القادمة من Firebase
 let likeBusy      = {};   // قفل مؤقت لمنع نقرات متكررة سريعة على نفس المشروع
 
+// إشعارات "تم التفاعل/التعليق على مشروعك" — تُغذَّى آنياً من Firebase
+// Realtime Database عبر مستمع خاص بكل مستخدم (notifications/{universityId})
+let notifications       = {}; // { pushId: {type, actorName, projectUid, projectName, text, read, timestamp} }
+let notifListenerRef    = null;
+let notifListenStartedAt = 0; // لحظة بدء الاستماع — لتمييز الإشعارات "الجديدة فعلاً" (تستحق toast) عن القديمة المحمَّلة عند الفتح
+
 // المستخدم الحالي (تُحفظ بياناته العامة محلياً للإبقاء على الجلسة بين التحديثات)
 let currentUser = null; // { universityId, name, year }
 
@@ -1320,7 +1417,8 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreSession();     // استعادة جلسة الدخول المحفوظة محلياً قبل أي شيء آخر
   loadProjects();
   renderSidePanel();
-  initRealtimeListeners(); // تفعيل الاستماع الآني للايكات والتعليقات عبر Firebase
+  initRealtimeListeners();   // تفعيل الاستماع الآني للايكات والتعليقات عبر Firebase
+  initNotificationsListener(); // تفعيل الاستماع الآني لإشعارات المستخدم الحالي (إن كان مسجَّل دخوله)
 
   document.getElementById('videoUrlInput').addEventListener('input', previewVideoURL);
   document.getElementById('commentInput').addEventListener('input', e => {
@@ -1328,10 +1426,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('commentSendBtn').disabled = true;
 
-  // إغلاق أي قائمة خيارات (⋯) مفتوحة عند الضغط في أي مكان آخر
+  // إغلاق أي قائمة خيارات (⋯) أو لوحة إشعارات مفتوحة عند الضغط في أي مكان آخر
   document.addEventListener('click', e => {
     if (!e.target.closest('.card-options-btn') && !e.target.closest('.card-options-menu')) {
       document.querySelectorAll('.card-options-menu.open').forEach(m => m.classList.remove('open'));
+    }
+    if (!e.target.closest('.notif-btn') && !e.target.closest('.notif-panel')) {
+      closeNotifPanel();
     }
   });
 });
@@ -2059,11 +2160,11 @@ function supportAndSupervisorsRowsHTML() {
   return `
     <div class="sp-links-group">
       <button class="sp-link-row" onclick="window.open('https://wa.me/${CFG.SUPPORT_WHATSAPP}','_blank')">
-        <span class="sp-link-ico">🛠️</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
+        <span class="sp-link-ico">🛟</span><span class="sp-link-label">الدعم الفني</span><span class="sp-link-chev">‹</span>
       </button>
       <div class="sp-dropdown" id="supervisorsDropdown">
         <button class="sp-link-row" onclick="toggleSupervisorsDropdown()">
-          <span class="sp-link-ico">🔐</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
+          <span class="sp-link-ico">🧑‍🏫</span><span class="sp-link-label">المشرفون</span><span class="sp-link-chev">‹</span>
         </button>
         <div class="sp-dropdown-list">
           ${CFG.SUPERVISORS.map(s => `
@@ -2407,6 +2508,7 @@ function logoutUser() {
   currentUser = null;
   saveSession();
   recomputeLikesFromTree();
+  initNotificationsListener();
   renderSidePanel();
   applyFilters();
   toast('تم تسجيل الخروج','ok');
@@ -2503,6 +2605,7 @@ async function submitLogin() {
   currentUser = { universityId: res.universityId || universityId, name: res.name || '', year: res.year || '', fatherName: res.fatherName || '' };
   saveSession();
   recomputeLikesFromTree();
+  initNotificationsListener();
   closeOverlayDirect('authOverlay');
   renderSidePanel();
   applyFilters();
@@ -2634,6 +2737,7 @@ async function submitOtpStep() {
     currentUser = { universityId: authFlow.universityId, name: res.name || authFlow.studentName || '', year: res.year || '', fatherName: res.fatherName || authFlow.studentFatherName || '' };
     saveSession();
     recomputeLikesFromTree();
+    initNotificationsListener();
     closeOverlayDirect('authOverlay');
     renderSidePanel();
     applyFilters();
@@ -2928,8 +3032,12 @@ async function handleLikeClick(event, uid) {
   const likeRef = db.ref('likes/' + uid + '/' + currentUser.universityId);
   try {
     const snap = await likeRef.once('value');
-    if (snap.exists()) await likeRef.remove();
-    else await likeRef.set(firebase.database.ServerValue.TIMESTAMP);
+    if (snap.exists()) {
+      await likeRef.remove();
+    } else {
+      await likeRef.set(firebase.database.ServerValue.TIMESTAMP);
+      notifyProjectInteraction(uid, 'like'); // إشعار صاحب المشروع — فقط عند الإعجاب (وليس عند إلغائه)
+    }
     // لا داعي لتحديث الواجهة يدوياً هنا — مستمع likes في initRealtimeListeners()
     // يحدّثها آنياً فور تنفيذ الكتابة محلياً (حتى قبل تأكيد الخادم)، وهذا ما
     // يمنح الإحساس بالآنية الفورية لدى كل من المستخدم نفسه وبقية المتصفّحين.
@@ -3014,6 +3122,7 @@ async function sendComment() {
       timestamp:    firebase.database.ServerValue.TIMESTAMP,
     });
     input.value = '';
+    notifyProjectInteraction(activeCommentsUID, 'comment', text); // إشعار صاحب المشروع بالتعليق الجديد
     // ستُحدَّث القائمة والعداد آنياً عبر مستمع comments في initRealtimeListeners()
     // فور وصول القيمة محلياً، فلا حاجة لإدراجها يدوياً هنا.
   } catch (e) {
@@ -3084,6 +3193,173 @@ function recomputeCommentCountsFromTree() {
     const count = commentCounts[uid] || 0;
     el.textContent = count > 0 ? count : '';
   });
+}
+
+/* ══════════════════════════════════════════
+   NOTIFICATIONS — "تم التفاعل مع مشروعك / تم التعليق على مشروعك"
+   تُستخدم Firebase Realtime Database (نفس قاعدة اللايكات/التعليقات —
+   خدمة مجانية بالكامل) لإيصال إشعار فوري لصاحب/أصحاب المشروع دون أي
+   تحديث للصفحة. آلية العمل:
+
+   1) عند إعجاب/تعليق مستخدم على مشروع، تستدعي notifyProjectInteraction()
+      الخادم (Apps Script) بشكل "fire-and-forget" (دون انتظار الرد، تماماً
+      كما تُرسَل إضافة/تعديل المشروع).
+   2) الخادم يطابق أعضاء ذلك المشروع مع كشف الطلاب لإيجاد رقمهم/أرقامهم
+      الجامعية، ثم يكتب إشعاراً مباشرةً في:
+          notifications/{universityId}/{pushId}
+   3) كل مستخدم مسجّل دخوله يستمع آنياً (initNotificationsListener) لعقدة
+      إشعاراته الخاصة فقط، فتُحدَّث لوحة جرس الإشعارات 🔔 فوراً، مع تنبيه
+      منبثق (toast) إن وصل الإشعار أثناء تواجده على الصفحة.
+
+   ⚠️ ملاحظة إعداد: تأكد من السماح بالقراءة/الكتابة على عقدة "notifications"
+   ضمن Rules الخاصة بـ Firebase Realtime Database — نفس ملاحظة likes/comments.
+══════════════════════════════════════════ */
+
+// يُستدعى فور نجاح كتابة لايك/تعليق على Firebase — لا ننتظر رده ولا نوقف
+// عليه أي شيء في الواجهة، فهو مجرد إعلام لصاحب المشروع في الخلفية
+function notifyProjectInteraction(projectUid, type, commentText) {
+  if (!currentUser || !projectUid) return;
+  const params = {
+    action: 'notifyInteraction',
+    projectUid,
+    type,
+    actorUniversityId: currentUser.universityId,
+    actorName: currentUser.name || currentUser.universityId,
+  };
+  if (type === 'comment' && commentText) params.commentText = commentText;
+  const qs = new URLSearchParams(params);
+  fetch(CFG.APPS_SCRIPT_URL + '?' + qs, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+}
+
+// تفعيل/إيقاف الاستماع الآني لإشعارات المستخدم الحالي — يُستدعى عند الإقلاع،
+// وبعد كل تسجيل دخول/إنشاء حساب ناجح، وعند تسجيل الخروج (لإيقافه وتفريغه)
+function initNotificationsListener() {
+  if (notifListenerRef) { notifListenerRef.off(); notifListenerRef = null; }
+  notifications = {};
+  updateNotifBadge();
+  renderNotifPanel();
+
+  if (!currentUser) return;
+
+  notifListenStartedAt = Date.now();
+  notifListenerRef = db.ref('notifications/' + currentUser.universityId).limitToLast(50);
+
+  notifListenerRef.on('value', snapshot => {
+    notifications = snapshot.val() || {};
+    updateNotifBadge();
+    renderNotifPanel();
+  }, err => console.warn('Firebase notifications listener error:', err));
+
+  // تنبيه منبثق فوري — فقط للإشعارات التي وصلت فعلاً بعد بدء الاستماع
+  // (وليس الدفعة الأولى من الإشعارات القديمة المحمَّلة عند فتح الصفحة)
+  notifListenerRef.on('child_added', snapshot => {
+    const n = snapshot.val();
+    if (n && !n.read && (n.timestamp || 0) > notifListenStartedAt) {
+      toast(notifToastText(n), 'ok');
+    }
+  });
+}
+
+function notifListArr() {
+  return Object.keys(notifications)
+    .map(id => ({ id, ...notifications[id] }))
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('notifBadge');
+  if (!badge) return;
+  const unread = Object.values(notifications).filter(n => n && !n.read).length;
+  if (unread > 0) { badge.textContent = unread > 9 ? '9+' : String(unread); badge.style.display = 'flex'; }
+  else { badge.style.display = 'none'; }
+}
+
+function notifText(n) {
+  const name = esc(n.actorName || 'مستخدم');
+  const verb = n.type === 'comment' ? 'علّق' : 'تفاعل مع';
+  let html = `<b>${name}</b> ${verb} مشروعك`;
+  if (n.projectName) html += ` — <span class="notif-proj">${esc(n.projectName)}</span>`;
+  return html;
+}
+
+function notifToastText(n) {
+  const name = n.actorName || 'مستخدم';
+  return n.type === 'comment'
+    ? `💬 تم التعليق على مشروعك بواسطة ${name}`
+    : `❤️ تم التفاعل مع مشروعك بواسطة ${name}`;
+}
+
+function renderNotifPanel() {
+  const list = document.getElementById('notifList');
+  if (!list) return;
+
+  if (!currentUser) {
+    list.innerHTML = `<div class="notif-empty">سجّل دخولك لرؤية الإشعارات</div>`;
+    return;
+  }
+
+  const items = notifListArr();
+  if (!items.length) {
+    list.innerHTML = `<div class="notif-empty">لا توجد إشعارات بعد</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="handleNotifClick('${n.id}')">
+      <div class="notif-ico">${n.type === 'comment' ? '💬' : '❤️'}</div>
+      <div class="notif-body">
+        <div class="notif-text">${notifText(n)}</div>
+        ${n.type === 'comment' && n.text ? `<div class="notif-snippet">${esc(n.text)}</div>` : ''}
+        <div class="notif-time">${formatCommentTime(n.timestamp)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleNotifPanel(event) {
+  event.stopPropagation();
+  document.querySelectorAll('.card-options-menu.open').forEach(m => m.classList.remove('open'));
+  document.getElementById('notifPanel').classList.toggle('open');
+}
+
+function closeNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+function handleNotifClick(id) {
+  const n = notifications[id];
+  if (!n || !currentUser) return;
+  if (!n.read) db.ref('notifications/' + currentUser.universityId + '/' + id + '/read').set(true).catch(() => {});
+  closeNotifPanel();
+
+  if (n.type === 'comment' && n.projectUid) {
+    const p = allProjects.find(x => x.uid === n.projectUid);
+    openCommentsModal({ stopPropagation(){} }, n.projectUid, p ? p.name : (n.projectName || ''));
+  } else if (n.projectUid) {
+    scrollToProject(n.projectUid);
+  }
+}
+
+function markAllNotificationsRead() {
+  if (!currentUser) return;
+  const updates = {};
+  Object.keys(notifications).forEach(id => {
+    if (notifications[id] && !notifications[id].read) updates[id + '/read'] = true;
+  });
+  if (!Object.keys(updates).length) return;
+  db.ref('notifications/' + currentUser.universityId).update(updates).catch(() => {
+    toast('تعذّر تحديث الإشعارات، تحقّق من اتصالك بالإنترنت','err');
+  });
+}
+
+// تمييز بطاقة مشروع معيّن بومضة قصيرة بعد الانتقال إليها من إشعار
+function scrollToProject(uid) {
+  const card = document.querySelector(`.project-card[data-uid="${CSS.escape(uid)}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('notif-flash');
+  setTimeout(() => card.classList.remove('notif-flash'), 1700);
 }
 
 </script>
