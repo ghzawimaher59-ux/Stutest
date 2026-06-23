@@ -400,6 +400,10 @@
     .cfg-banner.on { display:block; }
 
     /* ── RESPONSIVE ── */
+    /* ── MOBILE FAB BAR ── */
+    .mobile-fab-bar {
+      display: none;
+    }
     @media (max-width:640px) {
       .site-header { padding: 0 16px; }
       .hero { padding: 44px 16px 36px; }
@@ -408,6 +412,29 @@
       .cards-grid { grid-template-columns: 1fr; }
       .modal-box, .detail-modal-box, .admin-modal-box { border-radius: 16px 16px 0 0; max-height: 88vh; }
       .overlay { align-items: flex-end; padding: 0; }
+
+      /* إخفاء زر الإضافة من الهيدر على الهاتف */
+      .header-actions .fab { display: none; }
+
+      /* شريط الزر المثبّت على الهاتف */
+      .mobile-fab-bar {
+        display: block;
+        position: sticky;
+        top: 68px; /* ارتفاع الهيدر */
+        z-index: 19;
+        padding: 10px 16px;
+        background: rgba(10,11,16,0.92);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+      }
+      .mobile-fab-bar .fab {
+        width: 100%;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        padding: 12px 22px;
+        font-size: 15px;
+      }
     }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
@@ -719,6 +746,11 @@
     </button>
   </div>
 </header>
+
+<!-- MOBILE FAB BAR — يظهر فقط على الهاتف تحت الهيدر -->
+<div class="mobile-fab-bar">
+  <button class="fab" onclick="openAddModal()">＋ إضافة مشروع</button>
+</div>
 
 <!-- HERO -->
 <section class="hero">
