@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>لوحة مشاريع الطلاب</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:         #0A0B10;
@@ -35,7 +35,8 @@
 
     /* ── AMBIENT ── */
     .ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .ambient-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.07; }
+    .ambient-orb { position: absolute; border-radius: 50%; filter: blur(55px); opacity: 0.10; }
+    @media (max-width: 768px) { .ambient-orb { display: none; } }
     .orb1 { width:700px; height:700px; background:var(--teal);   top:-200px; right:-150px; }
     .orb2 { width:500px; height:500px; background:var(--indigo); bottom:-100px; left:-100px; }
 
@@ -45,8 +46,7 @@
       padding: 0 32px; height: 68px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      background: rgba(10,11,16,0.85);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(10,11,16,0.97);
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-icon {
@@ -85,7 +85,7 @@
     /* ── CONTROLS ── */
     .controls-bar {
       position: sticky; top: 0; z-index: 20;
-      background: rgba(10,11,16,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(10,11,16,0.98);
       border-bottom: 1px solid var(--border); padding: 12px 32px;
     }
     .controls-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -133,6 +133,7 @@
       transition: transform .22s, border-color .22s, box-shadow .22s;
       display: flex; flex-direction: column; gap: 13px;
       position: relative; overflow: hidden;
+      will-change: transform;
     }
     .project-card::after {
       content: ''; position: absolute; bottom: 0; right: 0; left: 0; height: 2px;
@@ -195,7 +196,7 @@
     /* ── OVERLAYS ── */
     .overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.72);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
       z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
       opacity: 0; pointer-events: none; transition: opacity .25s;
     }
@@ -430,9 +431,7 @@
         top: 68px; /* ارتفاع الهيدر */
         z-index: 21; /* أعلى من controls-bar (z-index:20) */
         padding: 10px 16px;
-        background: rgba(10,11,16,0.92);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        background: rgba(10,11,16,0.98);
         border-bottom: 1px solid var(--border);
       }
       .mobile-fab-bar .fab {
@@ -549,7 +548,7 @@
     .page-blur-overlay {
       position: fixed; inset: 0; z-index: 150;
       background: rgba(5,6,10,0.45);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
       opacity: 0; pointer-events: none; transition: opacity .3s;
     }
     .page-blur-overlay.open { opacity: 1; pointer-events: all; }
@@ -782,7 +781,7 @@
   <div class="controls-inner">
     <div class="search-box">
       <span class="ico">🔍</span>
-      <input type="text" id="searchInput" placeholder="ابحث عن مشروع أو اسم طالب…" oninput="applyFilters()" />
+      <input type="text" id="searchInput" placeholder="ابحث عن مشروع أو اسم طالب…" oninput="debouncedFilter()" />
     </div>
     <div class="filter-pills">
       <button class="pill active"      data-f="all"       onclick="setFilter('all',this)">الكل</button>
@@ -1405,7 +1404,7 @@ const db = firebase.database();
 const CFG = {
   SPREADSHEET_ID:  '1vvXZA7JxDV1Q4y7IGbAZo8HxJgHR8MsorlTXoy_1wZw',
   SHEET_NAME:      'Projects',
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxX_lsemME09jBlNDIFKxXBCnPyAxH6joVoXF6Jf6owhpdWq3AAOLJSz2k1mJo0dD7-gA/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwGVwieimPtUpqfx5pIiCUozEMDxOr63b8CVLqOOYxV-Gdi7rB9HTk8BRE3Z5ti7gNL9w/exec',
   MAX_MEMBERS: 5,
   MIN_MEMBERS: 1,
   SUPPORT_WHATSAPP: '963950087443',
@@ -1557,6 +1556,13 @@ function setFilter(f, btn) {
   applyFilters();
 }
 
+/* ── debounce للبحث: يمنع re-render عند كل حرف ── */
+let _searchTimer;
+function debouncedFilter() { clearTimeout(_searchTimer); _searchTimer=setTimeout(applyFilters, 160); }
+
+/* ── منع النقرة المزدوجة أثناء تسجيل الدخول ── */
+let _authBusy = false;
+
 function applyFilters() {
   const q    = document.getElementById('searchInput').value.trim().toLowerCase();
   const sort = document.getElementById('sortSelect').value;
@@ -1591,10 +1597,14 @@ function renderGrid(list) {
   empty.style.display = 'none'; info.style.display = 'block'; grid.style.display = 'grid';
   info.innerHTML = `عرض <strong>${list.length}</strong> مشروع`;
   grid.innerHTML = list.map(p => cardHTML(p)).join('');
+  const _cards = grid.querySelectorAll('.project-card');
+  _cards.forEach(el => { el.style.opacity='0'; el.style.transform='translateY(8px)'; });
   requestAnimationFrame(() => {
-    grid.querySelectorAll('.project-card').forEach((el,i) => {
-      el.style.opacity='0'; el.style.transform='translateY(10px)';
-      setTimeout(() => { el.style.transition='opacity .28s,transform .28s'; el.style.opacity='1'; el.style.transform='translateY(0)'; }, i*35);
+    _cards.forEach((el,i) => {
+      setTimeout(() => {
+        el.style.transition='opacity .25s,transform .25s';
+        el.style.opacity='1'; el.style.transform='translateY(0)';
+      }, Math.min(i*28, 250));
     });
   });
 }
@@ -2052,18 +2062,26 @@ function updateCounters() {
   animNum('cntDone', done);
 }
 
+const _numTimers = {};
 function animNum(id, target) {
-  const el=document.getElementById(id); let cur=0;
+  if (_numTimers[id]) { clearInterval(_numTimers[id]); delete _numTimers[id]; }
+  const el=document.getElementById(id); if(!el) return; let cur=0;
   const step=Math.max(1,Math.ceil(target/35));
-  const t=setInterval(()=>{ cur=Math.min(cur+step,target); el.textContent=cur; if(cur>=target)clearInterval(t); },22);
+  _numTimers[id]=setInterval(()=>{
+    cur=Math.min(cur+step,target); el.textContent=cur;
+    if(cur>=target){ clearInterval(_numTimers[id]); delete _numTimers[id]; }
+  },22);
 }
 
-function openOverlay(id)  { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+/* ── Scroll-lock counter: يمنع بقاء overflow:hidden عالقاً ── */
+let _scrollLocks = 0;
+function lockScroll()   { if (++_scrollLocks===1) document.body.style.overflow='hidden'; }
+function unlockScroll() { _scrollLocks=Math.max(0,_scrollLocks-1); if(_scrollLocks===0) document.body.style.overflow=''; }
+
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); lockScroll(); }
 function closeOverlayDirect(id) {
   document.getElementById(id).classList.remove('open');
-  if (!document.querySelector('.overlay.open') && !document.getElementById('sidePanel').classList.contains('open')) {
-    document.body.style.overflow = '';
-  }
+  unlockScroll();
 }
 function closeOverlay(id,e) { if(e.target===document.getElementById(id)) closeOverlayDirect(id); }
 
@@ -2120,12 +2138,12 @@ function openSidePanel() {
   renderSidePanel();
   document.getElementById('sidePanelBlur').classList.add('open');
   document.getElementById('sidePanel').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockScroll();
 }
 function closeSidePanel() {
   document.getElementById('sidePanelBlur').classList.remove('open');
   document.getElementById('sidePanel').classList.remove('open');
-  if (!document.querySelector('.overlay.open')) document.body.style.overflow = '';
+  unlockScroll();
 }
 
 function renderSidePanel() {
@@ -2635,13 +2653,16 @@ function setBtnLoading(loading, label) {
 }
 
 async function submitLogin() {
+  if (_authBusy) return;
   const universityId = document.getElementById('loginUid').value.trim();
   const password = document.getElementById('loginPw').value;
   if (!universityId || !password) return toast('أدخل الرقم الجامعي وكلمة السر','err');
 
+  _authBusy = true;
   setBtnLoading(true);
   const res = await callApi({ action:'login', universityId, password });
   setBtnLoading(false);
+  _authBusy = false;
 
   if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
 
@@ -2657,12 +2678,15 @@ async function submitLogin() {
 }
 
 async function submitSignupId() {
+  if (_authBusy) return;
   const universityId = document.getElementById('signupUid').value.trim();
   if (!universityId) return toast('أدخل الرقم الجامعي','err');
 
+  _authBusy = true;
   setBtnLoading(true);
   const res = await callApi({ action:'checkStudent', universityId });
   setBtnLoading(false);
+  _authBusy = false;
 
   if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
   if (res.exists) {
@@ -2683,6 +2707,7 @@ async function submitSignupId() {
 }
 
 async function submitSignupForm() {
+  if (_authBusy) return;
   const pw1 = document.getElementById('signupPw').value;
   const pw2 = document.getElementById('signupPwConfirm').value;
   const email = document.getElementById('signupEmail').value.trim();
@@ -2691,9 +2716,11 @@ async function submitSignupForm() {
   if (pw1 !== pw2) return toast('كلمتا السر غير متطابقتين','err');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('صيغة البريد الإلكتروني غير صحيحة','err');
 
+  _authBusy = true;
   setBtnLoading(true);
   const res = await callApi({ action:'sendSignupOtp', universityId: authFlow.universityId, email });
   setBtnLoading(false);
+  _authBusy = false;
 
   if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
 
@@ -2704,12 +2731,15 @@ async function submitSignupForm() {
 }
 
 async function submitForgotId() {
+  if (_authBusy) return;
   const universityId = document.getElementById('forgotUid').value.trim();
   if (!universityId) return toast('أدخل الرقم الجامعي','err');
 
+  _authBusy = true;
   setBtnLoading(true);
   const res = await callApi({ action:'sendResetOtp', universityId });
   setBtnLoading(false);
+  _authBusy = false;
 
   if (res.status !== 'success') return toast(res.message || 'حدث خطأ','err');
 
@@ -3215,6 +3245,7 @@ function initRealtimeListeners() {
   }, err => console.warn('Firebase comments listener error:', err));
 }
 
+let _likeRaf = null;
 function recomputeLikesFromTree() {
   likeCounts = {};
   myLikes    = {};
@@ -3223,18 +3254,28 @@ function recomputeLikesFromTree() {
     likeCounts[uid] = Object.keys(likers).length;
     if (currentUser && likers[currentUser.universityId]) myLikes[uid] = true;
   });
-  allProjects.forEach(p => updateLikeDOM(p.uid));
+  /* تجميع تحديثات DOM في إطار رسم واحد */
+  if (_likeRaf) cancelAnimationFrame(_likeRaf);
+  _likeRaf = requestAnimationFrame(() => {
+    allProjects.forEach(p => updateLikeDOM(p.uid));
+    _likeRaf = null;
+  });
 }
 
+let _commentRaf = null;
 function recomputeCommentCountsFromTree() {
   commentCounts = {};
   Object.keys(commentsTree).forEach(uid => {
     commentCounts[uid] = Object.keys(commentsTree[uid] || {}).length;
   });
-  document.querySelectorAll('[id^="commentCount-"]').forEach(el => {
-    const uid = el.id.replace('commentCount-', '');
-    const count = commentCounts[uid] || 0;
-    el.textContent = count > 0 ? count : '';
+  if (_commentRaf) cancelAnimationFrame(_commentRaf);
+  _commentRaf = requestAnimationFrame(() => {
+    document.querySelectorAll('[id^="commentCount-"]').forEach(el => {
+      const uid = el.id.replace('commentCount-', '');
+      const count = commentCounts[uid] || 0;
+      el.textContent = count > 0 ? count : '';
+    });
+    _commentRaf = null;
   });
 }
 
