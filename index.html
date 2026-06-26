@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>لوحة مشاريع الطلاب</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -35,7 +36,7 @@
 
     /* ── AMBIENT ── */
     .ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .ambient-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.07; }
+    .ambient-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.07; will-change: transform; transform: translateZ(0); }
     .orb1 { width:700px; height:700px; background:var(--teal);   top:-200px; right:-150px; }
     .orb2 { width:500px; height:500px; background:var(--indigo); bottom:-100px; left:-100px; }
 
@@ -45,8 +46,9 @@
       padding: 0 32px; height: 68px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      background: rgba(10,11,16,0.85);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(10,11,16,0.92);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      will-change: transform;
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-icon {
@@ -85,8 +87,9 @@
     /* ── CONTROLS ── */
     .controls-bar {
       position: sticky; top: 0; z-index: 20;
-      background: rgba(10,11,16,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(10,11,16,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border); padding: 12px 32px;
+      contain: layout style;
     }
     .controls-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .search-box { flex: 1; min-width: 180px; position: relative; }
@@ -133,6 +136,8 @@
       transition: transform .22s, border-color .22s, box-shadow .22s;
       display: flex; flex-direction: column; gap: 13px;
       position: relative; overflow: hidden;
+      will-change: transform;
+      contain: layout style;
     }
     .project-card::after {
       content: ''; position: absolute; bottom: 0; right: 0; left: 0; height: 2px;
@@ -194,10 +199,10 @@
 
     /* ── OVERLAYS ── */
     .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.72);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
       z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
-      opacity: 0; pointer-events: none; transition: opacity .25s;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
     }
     .overlay.open { opacity: 1; pointer-events: all; }
 
@@ -298,7 +303,7 @@
       border: 1px dashed rgba(251,191,36,0.4);
       background: var(--amber-dim); color: var(--amber);
       font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
-      cursor: pointer; width: 100%; transition: all .18s;
+      cursor: pointer; width: 100%; transition: background .18s, border-color .18s;
     }
     .upload-video-btn:hover { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.6); }
 
@@ -309,7 +314,7 @@
       border: 1px dashed rgba(99,102,241,0.4);
       background: rgba(99,102,241,0.1); color: var(--indigo);
       font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
-      cursor: pointer; width: 100%; transition: all .18s;
+      cursor: pointer; width: 100%; transition: background .18s, border-color .18s;
     }
     .edit-project-btn:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.6); }
 
@@ -317,7 +322,7 @@
     .btn-danger {
       padding: 10px 22px; border-radius: var(--radius-sm); border: 1px solid rgba(248,113,113,0.35);
       background: rgba(248,113,113,0.1); color: var(--red);
-      font-family:'Cairo',sans-serif; font-size:14px; font-weight:800; cursor:pointer; transition: all .15s;
+      font-family:'Cairo',sans-serif; font-size:14px; font-weight:800; cursor:pointer; transition: background .15s, border-color .15s;
     }
     .btn-danger:hover { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.55); }
     .btn-danger:disabled { opacity:.4; cursor:not-allowed; }
@@ -430,9 +435,9 @@
         top: 68px; /* ارتفاع الهيدر */
         z-index: 21; /* أعلى من controls-bar (z-index:20) */
         padding: 10px 16px;
-        background: rgba(10,11,16,0.92);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        background: rgba(10,11,16,0.96);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         border-bottom: 1px solid var(--border);
       }
       .mobile-fab-bar .fab {
@@ -548,9 +553,9 @@
     ══════════════════════════════════════════ */
     .page-blur-overlay {
       position: fixed; inset: 0; z-index: 150;
-      background: rgba(5,6,10,0.45);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      opacity: 0; pointer-events: none; transition: opacity .3s;
+      background: rgba(5,6,10,0.5);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      opacity: 0; pointer-events: none; transition: opacity .25s;
     }
     .page-blur-overlay.open { opacity: 1; pointer-events: all; }
 
@@ -1588,15 +1593,53 @@ function renderGrid(list) {
     grid.style.display = 'none'; info.style.display = 'block';
     info.innerHTML = 'لا توجد نتائج تطابق البحث.'; empty.style.display = 'none'; return;
   }
-  empty.style.display = 'none'; info.style.display = 'block'; grid.style.display = 'grid';
+
+  empty.style.display = 'none';
+  info.style.display = 'block';
   info.innerHTML = `عرض <strong>${list.length}</strong> مشروع`;
-  grid.innerHTML = list.map(p => cardHTML(p)).join('');
-  requestAnimationFrame(() => {
-    grid.querySelectorAll('.project-card').forEach((el,i) => {
-      el.style.opacity='0'; el.style.transform='translateY(10px)';
-      setTimeout(() => { el.style.transition='opacity .28s,transform .28s'; el.style.opacity='1'; el.style.transform='translateY(0)'; }, i*35);
+
+  // Smart diff: only rebuild if UIDs or order changed
+  const newUids = list.map(p => p.uid).join(',');
+  const isFirstRender = grid.style.display !== 'grid';
+
+  if (!isFirstRender && grid.dataset.lastUids === newUids) {
+    // Same cards in same order — just refresh like/comment counts in-place
+    list.forEach(p => refreshCardCounts(p.uid));
+    return;
+  }
+
+  grid.dataset.lastUids = newUids;
+
+  if (isFirstRender) {
+    // First render: build all cards and animate them in
+    grid.style.display = 'grid';
+    grid.innerHTML = list.map(p => cardHTML(p)).join('');
+    requestAnimationFrame(() => {
+      grid.querySelectorAll('.project-card').forEach((el, i) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        el.style.transition = 'none';
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            el.style.transition = 'opacity .25s, transform .25s';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, i * 30);
+        });
+      });
     });
-  });
+  } else {
+    // Subsequent renders (filter/sort change): replace content without flicker
+    const newHTML = list.map(p => cardHTML(p)).join('');
+    // Fade out briefly, swap, fade in
+    grid.style.opacity = '0';
+    grid.style.transition = 'opacity .12s';
+    setTimeout(() => {
+      grid.innerHTML = newHTML;
+      grid.style.transition = 'opacity .15s';
+      grid.style.opacity = '1';
+    }, 120);
+  }
 }
 
 function cardHTML(p) {
@@ -1650,9 +1693,24 @@ function cardHTML(p) {
     </div>`;
 }
 
-/* ══════════════════════════════════════════
-   DETAIL MODAL
-══════════════════════════════════════════ */
+function refreshCardCounts(uid) {
+  // تحديث عدد اللايكات والتعليقات في مكانها دون إعادة رسم البطاقة
+  const likeCount = likeCounts[uid] || 0;
+  const isLiked   = !!myLikes[uid];
+  const commentCount = commentCounts[uid] || 0;
+  const likeBtn = document.getElementById('like-' + uid);
+  if (likeBtn) {
+    likeBtn.className = `card-act-btn ${isLiked ? 'liked' : ''}`;
+    const heartIco = likeBtn.querySelector('.heart-ico');
+    if (heartIco) heartIco.textContent = isLiked ? '❤️' : '🤍';
+    const likeCountEl = document.getElementById('likeCount-' + uid);
+    if (likeCountEl) likeCountEl.textContent = likeCount > 0 ? likeCount : '';
+  }
+  const commentCountEl = document.getElementById('commentCount-' + uid);
+  if (commentCountEl) commentCountEl.textContent = commentCount > 0 ? commentCount : '';
+}
+
+
 function openDetail(uid) {
   const p = allProjects.find(x => x.uid === uid);
   if (!p) return;
@@ -2052,10 +2110,19 @@ function updateCounters() {
   animNum('cntDone', done);
 }
 
+const _animTimers = {};
 function animNum(id, target) {
-  const el=document.getElementById(id); let cur=0;
-  const step=Math.max(1,Math.ceil(target/35));
-  const t=setInterval(()=>{ cur=Math.min(cur+step,target); el.textContent=cur; if(cur>=target)clearInterval(t); },22);
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (_animTimers[id]) clearInterval(_animTimers[id]);
+  let cur = parseInt(el.textContent) || 0;
+  if (cur === target) return;
+  const step = Math.max(1, Math.ceil(Math.abs(target - cur) / 25));
+  _animTimers[id] = setInterval(() => {
+    cur = cur < target ? Math.min(cur + step, target) : Math.max(cur - step, target);
+    el.textContent = cur;
+    if (cur === target) { clearInterval(_animTimers[id]); delete _animTimers[id]; }
+  }, 22);
 }
 
 function openOverlay(id)  { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
