@@ -2035,16 +2035,7 @@ function buildMemberSlots() {
 }
 
 function openAddModal() {
-  ['projName','projDesc'].forEach(id => {
-    document.getElementById(id).value = '';
-    document.getElementById(id).classList.remove('err');
-  });
-  for (let i=1;i<=CFG.MAX_MEMBERS;i++) {
-    const el = document.getElementById('mem'+i);
-    if (el) { el.value=''; el.classList.remove('err'); }
-  }
-  openOverlay('addOverlay');
-  setTimeout(() => document.getElementById('projName').focus(), 280);
+  toast('لقد فاتك المشروع، حظ أوفر في الامتحان 🎓','err');
 }
 
 async function submitProject() {
