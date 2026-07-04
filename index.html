@@ -1462,7 +1462,7 @@ function cardHTML(p) {
   const moreChip = extra > 0 ? `<div class="member-chip" style="color:var(--text-muted)">+${extra}</div>` : '';
   const badge    = p.status === 'completed'
     ? `<span class="status-badge completed">✅ مكتمل</span>`
-    : `<span class="status-badge pending">⏳ قيد التنفيذ</span>`;
+    : `<span class="status-badge pending">❌ لم يكتمل</span>`;
 
   const likeCount = likeCounts[p.uid] || 0;
   const isLiked   = !!myLikes[p.uid];
@@ -1519,7 +1519,7 @@ function openDetail(uid) {
 
   const badge = document.getElementById('dBadge');
   badge.className = 'status-badge ' + p.status;
-  badge.textContent = p.status === 'completed' ? '✅ مكتمل' : '⏳ قيد التنفيذ';
+  badge.textContent = p.status === 'completed' ? '✅ مكتمل' : '❌ لم يكتمل';
 
   const descEl = document.getElementById('dDesc');
   if (p.desc) { descEl.textContent = p.desc; descEl.style.display = 'block'; }
@@ -1544,7 +1544,7 @@ function openDetail(uid) {
       vArea.innerHTML = `<div class="video-placeholder"><div class="vp-icon">🎬</div><p>رابط الفيديو: <a href="${esc(p.videoURL)}" target="_blank" style="color:var(--teal)">${esc(p.videoURL)}</a></p></div>`;
     }
   } else if (p.status === 'pending') {
-    vArea.innerHTML = `<div class="video-placeholder"><div class="vp-icon">🎬</div><p>لم يُرفع فيديو بعد — المشروع قيد التنفيذ.</p></div>`;
+    vArea.innerHTML = `<div class="video-placeholder"><div class="vp-icon">🎬</div><p>لم يُرفع الفيديو  — المشروع لم يكتمل.</p></div>`;
   } else {
     vArea.innerHTML = `<div class="video-placeholder"><div class="vp-icon">🎬</div><p>المشروع مكتمل لكن لا يوجد فيديو مرتبط.</p></div>`;
   }
@@ -2001,7 +2001,7 @@ function renderSidePanel() {
       <div class="sp-mini-title">${esc(myProject.name)}</div>
       ${myProject.desc ? `<div class="sp-mini-desc">${esc(myProject.desc)}</div>` : ''}
       <span class="status-badge ${myProject.status==='completed'?'completed':'pending'} sp-mini-badge">
-        ${myProject.status==='completed' ? '✅ مكتمل' : '⏳ قيد التنفيذ'}
+        ${myProject.status==='completed' ? '✅ مكتمل' : '❌ لم يكتمل'}
       </span>
     </div>
   ` : `
